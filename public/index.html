@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturación</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sistema de Facturación</h1>
+        <label for="cliente">Nombre del Cliente:</label>
+        <input type="text" id="cliente" placeholder="Ingrese el nombre del cliente">
+
+        <table id="tabla-productos">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Valor Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Valor Total</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button id="agregar-producto">+ Agregar Producto</button>
+        <h2>Total: <span id="total-compra">$0</span></h2>
+        <button id="generar-factura">Generar Factura</button>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
