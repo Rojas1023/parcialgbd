@@ -3,13 +3,14 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const pdf = require("pdfkit");
-const path = require("path");
+const xlsx = require("xlsx"); // Importar la librería xlsx
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
 app.use(express.json());
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -179,6 +180,36 @@ app.delete("/productos/:id", async (req, res) => {
     } catch (error) {
         console.error("Error al eliminar producto:", error);
         res.status(500).json({ error: "No se pudo eliminar el producto." });
+    }
+});
+
+// Nueva ruta para generar el reporte en Excel de detalles_factura
+app.get("/reportes/detalles_factura", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM detalles_factura;");
+        const data = result.rows;
+
+        // Crear un nuevo libro de Excel
+        const workbook = xlsx.utils.book_new();
+
+        // Convertir los datos a una hoja de cálculo
+        const worksheet = xlsx.utils.json_to_sheet(data);
+
+        // Agregar la hoja de cálculo al libro
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Detalles Factura");
+
+        // Generar el archivo Excel como un buffer
+        const excelBuffer = xlsx.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+        // Configurar las cabeceras de la respuesta para descargar el archivo
+        res.setHeader("Content-Disposition", "attachment; filename=detalles_factura_reporte.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+        // Enviar el archivo Excel como respuesta
+        res.send(excelBuffer);
+    } catch (error) {
+        console.error("Error al generar el reporte en Excel:", error);
+        res.status(500).send("Error al generar el reporte en Excel");
     }
 });
 
