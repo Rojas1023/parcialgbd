@@ -13,7 +13,8 @@
     "pdfkit": "^0.16.0",
     "pg": "^8.14.0",
     "uuid": "^11.1.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13"
   },
   "name": "crudcloud",
   "version": "1.0.0",

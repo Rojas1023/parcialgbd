@@ -4,6 +4,7 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const pdf = require("pdfkit");
 const xlsx = require("xlsx"); // Importar la librería xlsx
+const XLSXStyle = require("xlsx-style");
 
 
 const app = express();
@@ -186,26 +187,126 @@ app.delete("/productos/:id", async (req, res) => {
 // Nueva ruta para generar el reporte en Excel de detalles_factura
 app.get("/reportes/detalles_factura", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM detalles_factura;");
+        const { nombre_producto } = req.query;
+
+        let query = `
+            SELECT 
+                DF.id_detalle,
+                F.id_factura,
+                P.id_producto,
+                P.nombre AS nombre_producto,
+                F.nombre_cliente,
+                DF.cantidad,
+                DF.valor_u,
+                DF.valor_t,
+                F.fecha
+            FROM detalles_factura DF
+            JOIN facturas F ON DF.id_factura = F.id_factura
+            JOIN productos P ON DF.id_producto = P.id_producto
+        `;
+
+        const queryParams = [];
+        if (nombre_producto) {
+            query += ` WHERE P.nombre = $1`;
+            queryParams.push(nombre_producto);
+        }
+
+        const result = await pool.query(query, queryParams);
         const data = result.rows;
 
-        // Crear un nuevo libro de Excel
         const workbook = xlsx.utils.book_new();
+        const headers = [
+            "ID Detalle",
+            "ID Factura",
+            "ID Producto",
+            "Nombre Producto",
+            "Cliente",
+            "Cantidad",
+            "Valor U.",
+            "Valor T.",
+            "Fecha"
+        ];
 
-        // Convertir los datos a una hoja de cálculo
-        const worksheet = xlsx.utils.json_to_sheet(data);
+        const worksheet = xlsx.utils.aoa_to_sheet([headers]);
 
-        // Agregar la hoja de cálculo al libro
+        xlsx.utils.sheet_add_json(worksheet, data, { header: Object.keys(data[0]), skipHeader: true, origin: "A2" });
+
+        // **Función para calcular el ancho mínimo necesario**
+        const getMinWidth = (colName, minWidth = 8, maxWidth = 15) => {
+            return Math.min(
+                Math.max(colName.length, ...data.map(row => (row[colName] ? row[colName].toString().length : 0)), minWidth),
+                maxWidth
+            );
+        };
+
+        // Ajustar todas las columnas automáticamente, EXCEPTO las columnas ID Detalle, ID Factura y ID Producto
+        const colWidths = headers.map((header, index) => {
+            const key = Object.keys(data[0])[index];
+
+            // Asegurar que las columnas ID Detalle, ID Factura e ID Producto tengan más espacio
+            if (["id_detalle", "id_factura", "id_producto"].includes(key)) {
+                return { wch: 20 }; // Ajustar estas columnas a un tamaño mayor
+            }
+
+            return { wch: getMinWidth(key) };
+        });
+
+        worksheet["!cols"] = colWidths;
+
+        // Agregar filtro en la tabla
+        worksheet["!autofilter"] = { ref: "A1:I" + (data.length + 1) };
+
+        // **ESTILOS**
+        const headerStyle = {
+            fill: { fgColor: { rgb: "4F81BD" } },
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            alignment: { horizontal: "center", vertical: "center" }
+        };
+
+        const evenRowStyle = {
+            fill: { fgColor: { rgb: "F2F2F2" } },
+            alignment: { horizontal: "center", vertical: "center" }
+        };
+
+        const oddRowStyle = {
+            fill: { fgColor: { rgb: "E6E6E6" } },
+            alignment: { horizontal: "center", vertical: "center" }
+        };
+
+        // Aplicar estilos al encabezado
+        headers.forEach((_, colIndex) => {
+            const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
+            if (worksheet[cellAddress]) {
+                worksheet[cellAddress].s = headerStyle;
+            }
+        });
+
+        // Aplicar estilos a las filas y corregir formato de números
+        data.forEach((row, index) => {
+            const rowIndex = index + 2;
+            const rowStyle = index % 2 === 0 ? evenRowStyle : oddRowStyle;
+
+            Object.keys(row).forEach((key, colIndex) => {
+                const cellAddress = `${String.fromCharCode(65 + colIndex)}${rowIndex}`;
+                if (!worksheet[cellAddress]) return;
+
+                worksheet[cellAddress].s = rowStyle;
+
+                // Quitar alerta de número como texto en columnas numéricas
+                if (["id_detalle", "id_factura", "id_producto", "cantidad", "valor_u", "valor_t"].includes(key)) {
+                    worksheet[cellAddress].z = "0";
+                    worksheet[cellAddress].t = "n";
+                }
+            });
+        });
+
         xlsx.utils.book_append_sheet(workbook, worksheet, "Detalles Factura");
 
-        // Generar el archivo Excel como un buffer
-        const excelBuffer = xlsx.write(workbook, { bookType: "xlsx", type: "buffer" });
+        const excelBuffer = XLSXStyle.write(workbook, { bookType: "xlsx", type: "buffer" });
 
-        // Configurar las cabeceras de la respuesta para descargar el archivo
         res.setHeader("Content-Disposition", "attachment; filename=detalles_factura_reporte.xlsx");
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
-        // Enviar el archivo Excel como respuesta
         res.send(excelBuffer);
     } catch (error) {
         console.error("Error al generar el reporte en Excel:", error);
