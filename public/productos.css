@@ -1,0 +1,78 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+    margin: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    display: inline-block;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+input, button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+button#guardarBtn {
+    background-color: #28a745;
+    color: white;
+}
+
+button#guardarBtn:hover {
+    background-color: #218838;
+}
+
+button.editar-btn {
+    background-color: #ffc107;
+    color: black;
+}
+
+button.eliminar-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+button.eliminar-btn:hover {
+    background-color: #c82333;
+}
+
+table {
+    width: 80%;
+    margin: auto;
+    background: white;
+    border-collapse: collapse;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+th {
+    background: #007bff;
+    color: white;
+}
+
+td {
+    text-align: center;
+}

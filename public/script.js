@@ -5,6 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const generarFacturaBtn = document.getElementById("generar-factura");
     const totalCompraSpan = document.getElementById("total-compra");
 
+    const limpiarFacturaBtn = document.getElementById("limpiar-factura");
+
+    limpiarFacturaBtn.addEventListener("click", () => {
+        clienteInput.value = ""; // Limpia el nombre del cliente
+        tablaProductos.innerHTML = ""; // Limpia la tabla de productos
+        totalCompra = 0; // Restablece el total de la compra
+        totalCompraSpan.textContent = "$0"; // Actualiza el total en la interfaz
+    });
+
     let totalCompra = 0;
     let productosDisponibles = [];
 
@@ -25,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const selectProducto = document.createElement("select");
         selectProducto.innerHTML = `<option value="">Seleccione...</option>` + 
-            productosDisponibles.map(p => `<option value="${p.id_producto}" data-precio="${p.valor_u}">${p.nombre}</option>`).join("");
+            productosDisponibles.map(p => `<option value="${p.id_producto}" data-precio="${p.valor_u}" data-stock="${p.stock}">${p.nombre}</option>`).join("");
 
         const valorUnitario = document.createElement("td");
         const cantidadInput = document.createElement("input");
@@ -75,8 +84,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const productos = Array.from(tablaProductos.children).map(row => ({
             id_producto: row.querySelector("select").value,
             cantidad: row.querySelector("input").value,
-            valor_u: parseFloat(row.querySelector("td:nth-child(2)").textContent.replace("$", ""))
+            valor_u: parseFloat(row.querySelector("td:nth-child(2)").textContent.replace("$", "")),
+            stock: parseInt(row.querySelector("select").selectedOptions[0].dataset.stock)
         }));
+
+        for (let producto of productos) {
+            if (producto.cantidad > producto.stock) {
+                // Buscar el producto en productosDisponibles
+                const productoCompleto = productosDisponibles.find(p => p.id_producto === producto.id_producto);
+                if (productoCompleto) {
+                    return alert(`No hay suficiente stock para el producto: ${productoCompleto.nombre} ID: ${producto.id_producto}.`);
+                } else {
+                    return alert(`No hay suficiente stock para el producto con ID: ${producto.id_producto}.`);
+                }
+            }
+        }
 
         const res = await fetch("/facturas", {
             method: "POST",
@@ -92,3 +114,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cargarProductos();
 });
+

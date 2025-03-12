@@ -3,14 +3,12 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 const pdf = require("pdfkit");
-const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-// app.use(express.static("public"));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static("public"));
 app.use(express.json());
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -30,6 +28,9 @@ app.post("/facturas", async (req, res) => {
         const valor_t = cantidad * valor_u;
         await pool.query("INSERT INTO DETALLES_FACTURA (ID_Factura, ID_Producto, Cantidad, Valor_U, Valor_T) VALUES ($1, $2, $3, $4, $5);",
             [id_factura, id_producto, cantidad, valor_u, valor_t]);
+
+        // Actualizar stock
+        await pool.query("UPDATE PRODUCTOS SET Stock = Stock - $1 WHERE ID_Producto = $2", [cantidad, id_producto]);
     }
 
     res.json({ id_factura });
@@ -108,4 +109,76 @@ app.get("/facturas/:id/pdf", async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`🚀 Servidor en http://localhost:${port}`));
+////////////////////////////////////////////////
+// Rutas CRUD para la tabla PRODUCTOS
+//  Obtener todos los productos (GET)
+app.get("/productos", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM PRODUCTOS;");
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener productos:", error);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// 🟢 Insertar un nuevo producto (POST)
+app.post("/productos", async (req, res) => {
+    try {
+        const { nombre, valor_u, stock } = req.body;
+        if (!nombre || valor_u == null || valor_u <= 0 || stock == null) {
+            return res.status(400).json({ error: "Nombre, precio y stock válidos son requeridos" });
+        }
+
+        const result = await pool.query(
+            "INSERT INTO PRODUCTOS (nombre, valor_u, stock) VALUES ($1, $2, $3) RETURNING *;",
+            [nombre, valor_u, stock]
+        );
+
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error("Error al agregar producto:", error);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// 🟠 Actualizar un producto (PUT)
+app.put("/productos/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, valor_u, stock } = req.body;
+
+        if (!nombre || valor_u == null || valor_u <= 0 || stock == null) {
+            return res.status(400).json({ error: "Nombre, precio y stock válidos son requeridos" });
+        }
+
+        const result = await pool.query(
+            "UPDATE PRODUCTOS SET nombre = $1, valor_u = $2, stock = $3 WHERE id_producto = $4 RETURNING *;",
+            [nombre, valor_u, stock, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Producto no encontrado" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Error al actualizar producto:", error);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+//  Eliminar un producto (DELETE)
+app.delete("/productos/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query("DELETE FROM detalles_factura WHERE id_producto = $1", [id]);
+        await pool.query("DELETE FROM productos WHERE id_producto = $1", [id]);
+        res.json({ message: "Producto eliminado correctamente." });
+    } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        res.status(500).json({ error: "No se pudo eliminar el producto." });
+    }
+});
+
+app.listen(port, () => console.log(` Servidor en http://localhost:${port}`));
