@@ -257,6 +257,8 @@ app.get("/reportes/detalles_factura", async (req, res) => {
 
         //Filtros en la tabla
         worksheet["!autofilter"] = { ref: "A1:I" + (data.length + 1) };
+        // Agregar filtro en la tabla
+        worksheet["!autofilter"] = { ref: "A1:I" + (data.length + 1) };
 
         //ESTILOS
         const headerStyle = {
@@ -276,11 +278,11 @@ app.get("/reportes/detalles_factura", async (req, res) => {
         };
 
         //Estilos al encabezado
-        headers.forEach((_, colIndex) => {
-            const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
-            if (worksheet[cellAddress]) {
-                worksheet[cellAddress].s = headerStyle;
-            }
+        //headers.forEach((_, colIndex) => {
+        //    const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
+        //    if (worksheet[cellAddress]) {
+        //        worksheet[cellAddress].s = headerStyle;
+        //     }
         });
 
         //Corregir formato de números
