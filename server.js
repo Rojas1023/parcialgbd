@@ -116,7 +116,7 @@ app.get("/facturas/:id/pdf", async (req, res) => {
 
 ////////////////////////////////////////////////
 // Rutas CRUD para la tabla PRODUCTOS
-//  Obtener todos los productos (GET)
+//Obtener todos los productos (GET)
 app.get("/productos", async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM PRODUCTOS;");
@@ -127,7 +127,7 @@ app.get("/productos", async (req, res) => {
     }
 });
 
-// 🟢 Insertar un nuevo producto (POST)
+//Insertar un nuevo producto (POST)
 app.post("/productos", async (req, res) => {
     try {
         const { nombre, valor_u, stock } = req.body;
@@ -147,7 +147,7 @@ app.post("/productos", async (req, res) => {
     }
 });
 
-// 🟠 Actualizar un producto (PUT)
+//Actualizar un producto (PUT)
 app.put("/productos/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -173,7 +173,7 @@ app.put("/productos/:id", async (req, res) => {
     }
 });
 
-//  Eliminar un producto (DELETE)
+//Eliminar un producto (DELETE)
 app.delete("/productos/:id", async (req, res) => {
     const { id } = req.params;
     try {
@@ -186,7 +186,7 @@ app.delete("/productos/:id", async (req, res) => {
     }
 });
 
-// Nueva ruta para generar el reporte en Excel de detalles_factura
+//Nueva ruta para generar el reporte en Excel de detalles_factura
 app.get("/reportes/detalles_factura", async (req, res) => {
     try {
         const { nombre_producto } = req.query;
@@ -233,7 +233,7 @@ app.get("/reportes/detalles_factura", async (req, res) => {
 
         xlsx.utils.sheet_add_json(worksheet, data, { header: Object.keys(data[0]), skipHeader: true, origin: "A2" });
 
-        // **Función para calcular el ancho mínimo necesario**
+        //Función para calcular el ancho mínimo necesario
         const getMinWidth = (colName, minWidth = 8, maxWidth = 15) => {
             return Math.min(
                 Math.max(colName.length, ...data.map(row => (row[colName] ? row[colName].toString().length : 0)), minWidth),
@@ -241,13 +241,13 @@ app.get("/reportes/detalles_factura", async (req, res) => {
             );
         };
 
-        // Ajustar todas las columnas automáticamente, EXCEPTO las columnas ID Detalle, ID Factura y ID Producto
+        //Ajustar todas las columnas automaticamente, EXCEPTO las columnas ID Detalle, ID Factura y ID Producto
         const colWidths = headers.map((header, index) => {
             const key = Object.keys(data[0])[index];
 
             // Asegurar que las columnas ID Detalle, ID Factura e ID Producto tengan más espacio
             if (["id_detalle", "id_factura", "id_producto"].includes(key)) {
-                return { wch: 20 }; // Ajustar estas columnas a un tamaño mayor
+                return { wch: 20 };
             }
 
             return { wch: getMinWidth(key) };
@@ -255,10 +255,10 @@ app.get("/reportes/detalles_factura", async (req, res) => {
 
         worksheet["!cols"] = colWidths;
 
-        // Agregar filtro en la tabla
+        //Filtros en la tabla
         worksheet["!autofilter"] = { ref: "A1:I" + (data.length + 1) };
 
-        // **ESTILOS**
+        //ESTILOS
         const headerStyle = {
             fill: { fgColor: { rgb: "4F81BD" } },
             font: { bold: true, color: { rgb: "FFFFFF" } },
@@ -275,7 +275,7 @@ app.get("/reportes/detalles_factura", async (req, res) => {
             alignment: { horizontal: "center", vertical: "center" }
         };
 
-        // Aplicar estilos al encabezado
+        //Estilos al encabezado
         headers.forEach((_, colIndex) => {
             const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
             if (worksheet[cellAddress]) {
@@ -283,7 +283,7 @@ app.get("/reportes/detalles_factura", async (req, res) => {
             }
         });
 
-        // Aplicar estilos a las filas y corregir formato de números
+        //Corregir formato de números
         data.forEach((row, index) => {
             const rowIndex = index + 2;
             const rowStyle = index % 2 === 0 ? evenRowStyle : oddRowStyle;
@@ -294,7 +294,7 @@ app.get("/reportes/detalles_factura", async (req, res) => {
 
                 worksheet[cellAddress].s = rowStyle;
 
-                // Quitar alerta de número como texto en columnas numéricas
+                //Quitar alerta de numero como texto en columnas numericas
                 if (["id_detalle", "id_factura", "id_producto", "cantidad", "valor_u", "valor_t"].includes(key)) {
                     worksheet[cellAddress].z = "0";
                     worksheet[cellAddress].t = "n";
