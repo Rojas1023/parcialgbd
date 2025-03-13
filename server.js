@@ -259,11 +259,11 @@ app.get("/reportes/detalles_factura", async (req, res) => {
         worksheet["!autofilter"] = { ref: "A1:I" + (data.length + 1) };
 
         //ESTILOS
-        const headerStyle = {
-            fill: { fgColor: { rgb: "4F81BD" } },
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            alignment: { horizontal: "center", vertical: "center" }
-        };
+        //const headerStyle = {
+        //    fill: { fgColor: { rgb: "4F81BD" } },
+        //    font: { bold: true, color: { rgb: "FFFFFF" } },
+        //    alignment: { horizontal: "center", vertical: "center" }
+        //};
 
         const evenRowStyle = {
             fill: { fgColor: { rgb: "F2F2F2" } },
@@ -275,13 +275,13 @@ app.get("/reportes/detalles_factura", async (req, res) => {
             alignment: { horizontal: "center", vertical: "center" }
         };
 
-        //Estilos al encabezado
-        headers.forEach((_, colIndex) => {
-            const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
-            if (worksheet[cellAddress]) {
-                worksheet[cellAddress].s = headerStyle;
-             }
-        });
+       // //Estilos al encabezado
+        //headers.forEach((_, colIndex) => {
+        //    const cellAddress = `${String.fromCharCode(65 + colIndex)}1`;
+        //    if (worksheet[cellAddress]) {
+       //         worksheet[cellAddress].s = headerStyle;
+        //     }
+      //  });
 
         //Corregir formato de números
         data.forEach((row, index) => {
@@ -306,7 +306,7 @@ app.get("/reportes/detalles_factura", async (req, res) => {
 
         const excelBuffer = XLSXStyle.write(workbook, { bookType: "xlsx", type: "buffer" });
 
-        res.setHeader("Content-Disposition", "attachment; filename=detalles_factura_reporte.xlsx");
+        res.setHeader("Content-Disposition", "attachment; filename=Reporte_Ventas.xlsx");
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
         res.send(excelBuffer);
