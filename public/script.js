@@ -8,10 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const limpiarFacturaBtn = document.getElementById("limpiar-factura");
 
     limpiarFacturaBtn.addEventListener("click", () => {
-        clienteInput.value = ""; // Limpia el nombre del cliente
-        tablaProductos.innerHTML = ""; // Limpia la tabla de productos
-        totalCompra = 0; // Restablece el total de la compra
-        totalCompraSpan.textContent = "$0"; // Actualiza el total en la interfaz
+        clienteInput.value = "";
+        tablaProductos.innerHTML = "";
+        totalCompra = 0;
+        totalCompraSpan.textContent = "$0";
     });
 
     let totalCompra = 0;
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         valorTotal.textContent = "$0.00";
 
         const botonEliminar = document.createElement("button");
-        botonEliminar.textContent = "❌";
+        botonEliminar.textContent = "🗑";
         botonEliminar.addEventListener("click", () => {
             row.remove();
             actualizarTotal();
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (let producto of productos) {
             if (producto.cantidad > producto.stock) {
-                // Buscar el producto en productosDisponibles
+                //Buscar el producto en productosDisponibles
                 const productoCompleto = productosDisponibles.find(p => p.id_producto === producto.id_producto);
                 if (productoCompleto) {
                     return alert(`No hay suficiente stock para el producto: ${productoCompleto.nombre} ID: ${producto.id_producto}.`);
